@@ -27,6 +27,7 @@
   },
   "devDependencies": {
     "@darraghor/eslint-plugin-nestjs-typed": "^6.7.1",
+    "@nestjs/cli": "^11.0.10",
     "@tsconfig/node20": "^20.1.6",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
