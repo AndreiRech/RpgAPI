@@ -1,13 +1,11 @@
-version: '3.8'
-
 services:
   api:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: rpg-api
+    container_name: rpg_api
     env_file:
-      -.env
+      - .env
     ports:
       - "${PORT}:${PORT}"
     depends_on:
@@ -18,15 +16,15 @@ services:
 
   db:
     image: postgres:16-alpine
-    container_name: postgres_db
+    container_name: rpg_db
     env_file:
-      -.env
+      - .env
     ports:
       - "${POSTGRES_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5

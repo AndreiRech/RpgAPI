@@ -7,3 +7,177 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id        String     @id @default(uuid())
+  name      String
+  email     String     @unique
+  password  String 
+  avatarUrl String?
+
+  campaigns Campaign[] 
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Campaign {
+  id          String   @id @default(uuid())
+  name        String
+  description String?  @db.Text 
+  system      String?  
+  theme       String?  
+  imageUrl    String?
+  status      Status   @default(PLANNED)
+
+  master   User   @relation(fields: [masterId], references: [id])
+  masterId String 
+
+  sessions   Session[]
+  characters Character[]
+  locations  Location[]
+  items      Item[]
+  lore       LoreEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Session {
+  id            String    @id @default(uuid())
+  title         String
+  sessionDate   DateTime  
+  summary       String?   @db.Text
+  gmNotes       String?   @db.Text
+  status        SessionStatus @default(PENDING)
+
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String
+
+  characters CharactersOnSessions[]
+  locations  LocationsOnSessions[]
+  items      ItemsOnSessions[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Character {
+  id          String  @id @default(uuid())
+  name        String
+  description String? @db.Text
+  imageUrl    String?
+  isNpc       Boolean @default(true)
+
+  race        String?
+  class       String?
+  traits      String? @db.Text
+  story       String? @db.Text
+
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String
+
+  sessions CharactersOnSessions[]
+}
+
+model Location {
+  id               String   @id @default(uuid())
+  name             String
+  description      String?  @db.Text
+  mapImageUrl      String?
+  pointsOfInterest String?  @db.Text
+
+  parent   Location? @relation("LocationHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  parentId String?
+  children Location[]  @relation("LocationHierarchy")
+  
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String
+
+  sessions LocationsOnSessions[]
+}
+
+model Item {
+  id          String     @id @default(uuid())
+  name        String
+  description String?    @db.Text
+  imageUrl    String?
+  rarity      Rarity     @default(COMMON)
+  type        ItemType   @default(MISC)
+  properties  String?    @db.Text      
+
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String
+
+  sessions ItemsOnSessions[]
+}
+
+model LoreEntry {
+  id       String   @id @default(uuid())
+  title    String
+  content  String   @db.Text
+  category String?  
+  imageUrl String?
+
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String
+}
+
+model CharactersOnSessions {
+  character   Character @relation(fields: [characterId], references: [id])
+  characterId String
+  session     Session   @relation(fields: [sessionId], references: [id])
+  sessionId   String
+
+  @@id([characterId, sessionId])
+}
+
+model LocationsOnSessions {
+  location   Location @relation(fields: [locationId], references: [id])
+  locationId String
+  session    Session  @relation(fields: [sessionId], references: [id])
+  sessionId  String
+
+  @@id([locationId, sessionId])
+}
+
+model ItemsOnSessions {
+  item      Item    @relation(fields: [itemId], references: [id])
+  itemId    String
+  session   Session @relation(fields: [sessionId], references: [id])
+  sessionId String
+
+  @@id([itemId, sessionId])
+}
+
+enum Status {
+  PLANNED
+  ACTIVE
+  COMPLETED
+  ON_HOLD
+}
+
+enum Rarity {
+  COMMON
+  UNCOMMON
+  RARE
+  VERY_RARE
+  LEGENDARY
+}
+
+enum ItemType {
+  WEAPON
+  ARMOR
+  POTION
+  SCROLL
+  WONDROUS_ITEM
+  KEY_ITEM
+  MISC
+}
+
+enum SessionStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  FAILED
+}
